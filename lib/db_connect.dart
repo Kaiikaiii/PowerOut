@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static const String baseUrl = 'https://lime-weasel-672604.hostingersite.com';
+  static const String baseUrl = 'https://lime-weasel-672604.hostingersite.com/login.php';
   static const Duration _timeout = Duration(seconds: 15);
 
   static Future<Map<String, dynamic>> signup(
