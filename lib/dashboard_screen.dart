@@ -5,7 +5,7 @@ class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
   static const Color _bg = Color(0xFFFFFFFF);
-  static const Color _alertYellow = Color(0xFFFFCC00);
+  static const Color _alertYellow = Color.fromARGB(255, 248, 248, 248);
   static const Color _statusDown = Color(0xFFFF4D4D);
   static const Color _statusUnstable = Color(0xFFFFB800);
   static const Color _statusStable = Color(0xFF27AE60);
