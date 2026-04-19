@@ -1,9 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'login_page.dart';
 
 /// Profile tab — account and settings.
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
+
+  // =========================
+  // 🔐 LOGOUT FUNCTION
+  // =========================
+  Future<void> _logout(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // Clear saved user session
+    await prefs.remove('user_id');
+    await prefs.remove('user_name');
+    await prefs.remove('user_email');
+    await prefs.remove('user_barangay');
+
+    if (!context.mounted) return;
+
+    Navigator.of(context).pushAndRemoveUntil<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => const LoginPage(),
+      ),
+      (route) => false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,18 +47,23 @@ class ProfileScreen extends StatelessWidget {
             child: Icon(Icons.person, size: 40),
           ),
           const SizedBox(height: 16),
+
           Text(
             'Account',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
           ),
+
           const SizedBox(height: 8),
+
           Text(
             'Manage your POWEROUT profile and preferences.',
             style: TextStyle(color: Colors.grey.shade600, height: 1.4),
           ),
+
           const SizedBox(height: 24),
+
           Card(
             elevation: 0,
             shape: RoundedRectangleBorder(
@@ -60,18 +88,16 @@ class ProfileScreen extends StatelessWidget {
               ],
             ),
           ),
+
           const SizedBox(height: 16),
+
+          // =========================
+          // 🔴 LOGOUT BUTTON
+          // =========================
           SizedBox(
             height: 48,
             child: ElevatedButton.icon(
-              onPressed: () {
-                Navigator.of(context).pushAndRemoveUntil<void>(
-                  MaterialPageRoute<void>(
-                    builder: (_) => const LoginPage(),
-                  ),
-                  (route) => false,
-                );
-              },
+              onPressed: () => _logout(context),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red.shade600,
                 foregroundColor: Colors.white,

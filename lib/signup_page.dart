@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'db_connect.dart';
+import 'apiservice.dart';
 import 'login_page.dart';
 
 class SignUpPage extends StatefulWidget {
@@ -72,8 +72,12 @@ class _SignUpPageState extends State<SignUpPage> {
     }
 
     setState(() => _isLoading = true);
-    final response = await ApiService.signup(name, email, password);
-    if (!mounted) return;
+final response = await ApiService.signup(
+  name,
+  email,
+  password,
+  _selectedBarangay!,
+);    if (!mounted) return;
     setState(() => _isLoading = false);
 
     if (_isSuccess(response)) {
