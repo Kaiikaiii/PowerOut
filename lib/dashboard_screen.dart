@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'dart:async';
+import 'emergency_contacts_screen.dart';
 
 /// Home "Status" tab — outage dashboard for POWEROUT.
 class DashboardScreen extends StatefulWidget {
@@ -13,8 +14,9 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  static const Color _bg = Colors.white;
-  static const Color _alertYellow = Color.fromARGB(255, 248, 248, 248);
+  static const Color _bg = Color(0xFFF2F3F5);
+  static const Color _cardBg = Colors.white;
+  static const Color _alertYellow = Color(0xFFECCE00);
   static const Color _statusDown = Color(0xFFFF4D4D);
   static const Color _statusUnstable = Color(0xFFFFB800);
   static const Color _statusStable = Color(0xFF27AE60);
@@ -86,18 +88,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
       backgroundColor: _bg,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch, 
             children: [
               _buildHeader(context),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               _buildEmergencyAlert(),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               _buildLiveMapSection(context),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               _buildOutagesHeader(context),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               const _OutageCard(
                 icon: Icons.power_off_rounded,
                 iconBg: Color(0xFFE8E8E8),
@@ -131,6 +133,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 statusColor: _statusStable,
                 rightSub: 'Restored',
                 rightSubBold: true,
+              ),
+              const SizedBox(height: 16),
+              _buildEmergencyContactsHeader(context),
+              const SizedBox(height: 8),
+              const _ContactPreviewCard(
+                icon: Icons.bolt_rounded,
+                iconColor: Color(0xFFCAA400),
+                title: 'CENECO MAIN',
+                subtitle: 'Bacolod Power Utility Hotline',
+              ),
+              const SizedBox(height: 8),
+              const _ContactPreviewCard(
+                icon: Icons.local_fire_department_rounded,
+                iconColor: Color(0xFFFF6A00),
+                title: 'BACOLOD FIRE DEPT',
+                subtitle: 'Fire Emergency (BFP)',
+              ),
+              const SizedBox(height: 8),
+              const _ContactPreviewCard(
+                icon: Icons.local_police_rounded,
+                iconColor: Color(0xFF444444),
+                title: 'BACOLOD POLICE',
+                subtitle: 'BCPO Station Dispatch',
               ),
             ],
           ),
@@ -170,8 +195,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
         Material(
-          color: const Color(0xFFF0F0F0),
+          color: _cardBg,
           shape: const CircleBorder(),
+          elevation: 0.5,
           child: InkWell(
             customBorder: const CircleBorder(),
             onTap: () {},
@@ -191,32 +217,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _alertYellow,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 44,
-            height: 44,
+            width: 26,
+            height: 26,
             decoration: const BoxDecoration(
               color: Colors.black,
               shape: BoxShape.circle,
             ),
             child: const Icon(
-              Icons.warning_amber_rounded,
+              Icons.warning_rounded,
               color: Colors.white,
-              size: 26,
+              size: 15,
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -225,18 +244,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   'EMERGENCY ALERT',
                   style: TextStyle(
                     fontWeight: FontWeight.w800,
-                    fontSize: 14,
+                    fontSize: 13,
                     letterSpacing: 0.5,
                   ),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  'Heavy Rain: Grid maintenance scheduled for Brgy. Mandalagan. Expect intermittent outages.',
-                  style: TextStyle(
-                    fontSize: 13,
-                    height: 1.35,
-                    color: Colors.black.withValues(alpha: 0.85),
-                  ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Heavy Rain: Grid maintenance scheduled for Brgy. Mandalagan.\nExpect intermittent outages.',
+                  style: TextStyle(fontSize: 12.5, height: 1.3),
                 ),
               ],
             ),
@@ -263,9 +278,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
             Text(
-              'Updated Just Now',
+              'Updated 2m ago',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 11,
                 color: Colors.grey.shade600,
               ),
             ),
@@ -273,7 +288,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         const SizedBox(height: 12),
         ClipRRect(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           child: AspectRatio(
             aspectRatio: 16 / 10,
             child: Stack(
@@ -325,7 +340,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(
-                      'TRACKING LOCATION',
+                      '12 ACTIVE ZONES',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 11,
@@ -338,25 +353,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Positioned(
                   right: 12,
                   bottom: 12,
-                  child: Material(
-                    color: Colors.white,
-                    shape: const CircleBorder(),
-                    elevation: 2,
-                    child: InkWell(
-                      customBorder: const CircleBorder(),
-                      onTap: () {
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: () {
                         if (_currentPosition != null) {
                           _mapController.move(_currentPosition!, 15.0);
                         }
                       },
-                      child: const Padding(
-                        padding: EdgeInsets.all(10),
-                        child: Icon(
-                          Icons.my_location,
-                          size: 20,
-                          color: Colors.black87,
-                        ),
-                      ),
+                      icon: const Icon(Icons.open_in_full_rounded, size: 18),
                     ),
                   ),
                 ),
@@ -369,12 +380,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildOutagesHeader(BuildContext context) {
-    // ... (Keep your existing _buildOutagesHeader code exactly the same)
+    return Text(
+      'CURRENT OUTAGES',
+      style: TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1.1,
+        color: Colors.grey.shade600,
+      ),
+    );
+  }
+
+  Widget _buildEmergencyContactsHeader(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          'CURRENT OUTAGES',
+          'EMERGENCY CONTACTS',
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w700,
@@ -383,7 +405,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
         TextButton(
-          onPressed: () {},
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const EmergencyContactsScreen(),
+              ),
+            );
+          },
           style: TextButton.styleFrom(
             padding: EdgeInsets.zero,
             minimumSize: Size.zero,
@@ -392,8 +420,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: const Text(
             'View All',
             style: TextStyle(
-              fontWeight: FontWeight.w800,
-              decoration: TextDecoration.underline,
+              fontWeight: FontWeight.w700,
               color: Colors.black,
             ),
           ),
@@ -433,15 +460,8 @@ class _OutageCard extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFEEEEEE)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: Row(
         children: [
@@ -499,6 +519,61 @@ class _OutageCard extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ContactPreviewCard extends StatelessWidget {
+  const _ContactPreviewCard({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE7E7E7)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 17, color: iconColor),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    color: Color(0xFF8A8A8A),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

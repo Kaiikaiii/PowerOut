@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'apiservice.dart';
 import 'report_store.dart';
 import 'submit_report_page.dart';
 
@@ -13,18 +15,140 @@ class ReportsScreen extends StatefulWidget {
 class _ReportsScreenState extends State<ReportsScreen> {
   /// 0 = All Reports, 1 = My Reports
   int _tabIndex = 0;
+  bool _isLoadingApiReports = false;
+  String _currentUserId = '';
+  List<_ReportData> _apiMyReports = <_ReportData>[];
 
   static const Color _bg = Color(0xFFF8F9FA);
   static const Color _primaryBlue = Color(0xFF1A44F4);
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeReports();
+  }
+
+  Future<void> _initializeReports() async {
+    await ReportStore.init();
+    if (!mounted) return;
+    await _loadReportsFromApi();
+  }
+
+  Future<void> _loadReportsFromApi() async {
+    setState(() {
+      _isLoadingApiReports = true;
+    });
+
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('user_id')?.trim() ?? '';
+    final myResponse = userId.isEmpty
+        ? <String, dynamic>{'success': true, 'reports': <dynamic>[]}
+        : await ApiService.getReports(userId: userId);
+
+    if (!mounted) return;
+
+    setState(() {
+      _currentUserId = userId;
+      _apiMyReports = _mapApiReports(_extractReportsList(myResponse));
+      _isLoadingApiReports = false;
+    });
+  }
+
+  List<dynamic> _extractReportsList(Map<String, dynamic> response) {
+    final reports = response['reports'];
+    if (reports is List) return reports;
+
+    final data = response['data'];
+    if (data is List) return data;
+
+    final items = response['items'];
+    if (items is List) return items;
+
+    return <dynamic>[];
+  }
+
+  List<_ReportData> _mapApiReports(dynamic rawReports) {
+    if (rawReports is! List) return <_ReportData>[];
+
+    return rawReports
+        .whereType<Map>()
+        .map((item) => item.map((key, value) => MapEntry(key.toString(), value)))
+        .map(_fromApiReport)
+        .toList();
+  }
+
+  _ReportData _fromApiReport(Map<String, dynamic> report) {
+    final type = (report['report_type'] ?? '').toString();
+    final status = (report['status'] ?? 'pending').toString().toLowerCase();
+
+    final iconConfig = _iconForReportType(type);
+    final statusConfig = _statusStyle(status);
+
+    return _ReportData(
+      icon: iconConfig.$1,
+      iconBg: iconConfig.$2,
+      iconColor: iconConfig.$3,
+      title: _titleFromReportType(type),
+      location: (report['location'] ?? 'Unknown location').toString(),
+      statusLabel: status.toUpperCase(),
+      statusBg: statusConfig.$1,
+      statusFg: statusConfig.$2,
+      timeLabel: _timeAgo(DateTime.tryParse((report['created_at'] ?? '').toString()) ?? DateTime.now()),
+    );
+  }
+
+  (IconData, Color, Color) _iconForReportType(String type) {
+    switch (type) {
+      case 'no_power':
+        return (Icons.power_off_rounded, const Color(0xFFFFE8E8), const Color(0xFFE53935));
+      case 'partial_power':
+        return (Icons.bolt_rounded, const Color(0xFFFFF3CD), const Color(0xFFB7791F));
+      case 'downed_line':
+        return (Icons.warning_amber_rounded, const Color(0xFFFFF3CD), const Color(0xFFE65100));
+      default:
+        return (Icons.report_problem_rounded, const Color(0xFFEEEEEE), const Color(0xFF616161));
+    }
+  }
+
+  (Color, Color) _statusStyle(String status) {
+    switch (status) {
+      case 'verified':
+        return (const Color(0xFFE3F2FD), const Color(0xFF1565C0));
+      case 'resolved':
+        return (const Color(0xFFE8F5E9), const Color(0xFF2E7D32));
+      default:
+        return (const Color(0xFFFFF3E0), const Color(0xFFE65100));
+    }
+  }
+
+  String _titleFromReportType(String type) {
+    switch (type) {
+      case 'no_power':
+        return 'No Power';
+      case 'partial_power':
+        return 'Partial Power';
+      case 'downed_line':
+        return 'Downed Line';
+      default:
+        return 'Other';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<List<UserReport>>(
       valueListenable: ReportStore.submittedReports,
       builder: (context, submitted, _) {
-        final userItems = submitted.map(_fromUserReport).toList();
-        final reports =
-            _tabIndex == 0 ? [...userItems, ..._allReports] : [...userItems, ..._myReports];
+        final userItems = submitted
+            .where((report) => report.userId == _currentUserId)
+            .map(_fromUserReport)
+            .toList();
+        final baseApiReports = _apiMyReports;
+        final fallbackReports = _myReports;
+        final reports = [
+          ...userItems,
+          ...(baseApiReports.isNotEmpty ? baseApiReports : fallbackReports),
+        ];
 
         return Scaffold(
           backgroundColor: _bg,
@@ -37,7 +161,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   MaterialPageRoute<void>(
                     builder: (_) => const SubmitReportPage(),
                   ),
-                );
+                ).then((_) => _loadReportsFromApi());
               },
               backgroundColor: const Color(0xFFFFCC00),
               foregroundColor: Colors.black,
@@ -106,6 +230,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
+                if (_isLoadingApiReports)
+                  const LinearProgressIndicator(minHeight: 2),
+                if (_isLoadingApiReports)
+                  const SizedBox(height: 8),
                 Expanded(
                   child: ListView.separated(
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
@@ -158,12 +286,22 @@ class _ReportsScreenState extends State<ReportsScreen> {
       iconBg: const Color(0xFFFFF3CD),
       iconColor: const Color(0xFFB7791F),
       title: report.title,
-      location: report.location,
+      location: _formatReportLocation(report),
       statusLabel: 'PENDING',
       statusBg: const Color(0xFFFFF3E0),
       statusFg: const Color(0xFFE65100),
       timeLabel: _timeAgo(report.createdAt),
     );
+  }
+
+  String _formatReportLocation(UserReport report) {
+    if (report.location.trim().isNotEmpty) {
+      return report.location;
+    }
+    if (report.latitude != null && report.longitude != null) {
+      return '${report.latitude!.toStringAsFixed(6)}, ${report.longitude!.toStringAsFixed(6)}';
+    }
+    return 'Bacolod City';
   }
 
   String _timeAgo(DateTime dt) {
