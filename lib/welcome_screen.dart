@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'admin_login_page.dart';
 import 'login_page.dart';
 import 'signup_page.dart';
 
@@ -124,6 +125,17 @@ class WelcomeScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const AdminLoginPage(),
+                    ),
+                  );
+                },
+                child: const Text('Admin Login'),
               ),
               
               const Spacer(flex: 1),
