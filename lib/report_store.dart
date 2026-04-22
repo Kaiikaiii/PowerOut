@@ -58,9 +58,9 @@ class ReportStore {
     await _persist();
   }
 
-  static void clear() {
+  static Future<void> clear() async {
     submittedReports.value = <UserReport>[];
-    _persist();
+    await _persist();
   }
 
   static Future<void> init() async {

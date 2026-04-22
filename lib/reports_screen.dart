@@ -144,7 +144,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             .map(_fromUserReport)
             .toList();
         final baseApiReports = _apiMyReports;
-        final fallbackReports = _myReports;
+        final fallbackReports = _tabIndex == 0 ? _allReports : _myReports;
         final reports = [
           ...userItems,
           ...(baseApiReports.isNotEmpty ? baseApiReports : fallbackReports),
