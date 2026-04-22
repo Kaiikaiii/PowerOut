@@ -1,14 +1,84 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
+import 'dart:async';
 
 /// Home "Status" tab — outage dashboard for POWEROUT.
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
-  static const Color _bg = Color(0xFFF9FAFB);
-  static const Color _alertYellow = Color(0xFFFACC15);
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  static const Color _bg = Colors.white;
+  static const Color _alertYellow = Color.fromARGB(255, 248, 248, 248);
   static const Color _statusDown = Color(0xFFFF4D4D);
   static const Color _statusUnstable = Color(0xFFFFB800);
   static const Color _statusStable = Color(0xFF27AE60);
+
+  final MapController _mapController = MapController();
+      
+  // Default to Bacolod City coordinates
+  final LatLng _defaultLocation = const LatLng(10.6667, 122.9500);
+  LatLng? _currentPosition;
+  StreamSubscription<Position>? _positionStreamSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _startLiveLocationTracking();
+  }
+
+  @override
+  void dispose() {
+    _positionStreamSubscription?.cancel();
+    super.dispose();
+  }
+
+  /// Requests permission and starts live user location updates.
+  Future<void> _startLiveLocationTracking() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // Test if location services are enabled.
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return;
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) return;
+    }
+    
+    if (permission == LocationPermission.deniedForever) return;
+
+    final position = await Geolocator.getCurrentPosition();
+    final current = LatLng(position.latitude, position.longitude);
+    if (!mounted) return;
+
+    setState(() {
+      _currentPosition = current;
+    });
+    _mapController.move(current, 15.0);
+
+    _positionStreamSubscription?.cancel();
+    _positionStreamSubscription = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.best,
+        distanceFilter: 5,
+      ),
+    ).listen((Position position) {
+      if (!mounted) return;
+      final updatedPosition = LatLng(position.latitude, position.longitude);
+      setState(() {
+        _currentPosition = updatedPosition;
+      });
+      _mapController.move(updatedPosition, _mapController.camera.zoom);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,9 +98,9 @@ class DashboardScreen extends StatelessWidget {
               const SizedBox(height: 24),
               _buildOutagesHeader(context),
               const SizedBox(height: 12),
-              _OutageCard(
+              const _OutageCard(
                 icon: Icons.power_off_rounded,
-                iconBg: const Color(0xFFE8E8E8),
+                iconBg: Color(0xFFE8E8E8),
                 title: 'Brgy. Estefania',
                 subtitle: 'Grid Maintenance',
                 statusLabel: 'DOWN',
@@ -39,9 +109,9 @@ class DashboardScreen extends StatelessWidget {
                 rightSubBold: true,
               ),
               const SizedBox(height: 12),
-              _OutageCard(
+              const _OutageCard(
                 icon: Icons.bolt_rounded,
-                iconBg: const Color(0xFFFFF3CD),
+                iconBg: Color(0xFFFFF3CD),
                 iconColor: _statusUnstable,
                 title: 'Lacson Street',
                 subtitle: 'Voltage Surge',
@@ -51,9 +121,9 @@ class DashboardScreen extends StatelessWidget {
                 rightSubBold: true,
               ),
               const SizedBox(height: 12),
-              _OutageCard(
+              const _OutageCard(
                 icon: Icons.check_circle_rounded,
-                iconBg: const Color(0xFFE8F8EE),
+                iconBg: Color(0xFFE8F8EE),
                 iconColor: _statusStable,
                 title: 'Barangay Bata',
                 subtitle: 'Restored 10m ago',
@@ -70,6 +140,7 @@ class DashboardScreen extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
+    // ... (Keep your existing _buildHeader code exactly the same)
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -115,6 +186,7 @@ class DashboardScreen extends StatelessWidget {
   }
 
   Widget _buildEmergencyAlert() {
+    // ... (Keep your existing _buildEmergencyAlert code exactly the same)
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -191,7 +263,7 @@ class DashboardScreen extends StatelessWidget {
               ),
             ),
             Text(
-              'Updated 2m ago',
+              'Updated Just Now',
               style: TextStyle(
                 fontSize: 12,
                 color: Colors.grey.shade600,
@@ -207,20 +279,39 @@ class DashboardScreen extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        const Color(0xFFE8F5E9),
-                        Colors.amber.shade50,
-                        const Color(0xFFFFF8E1),
-                      ],
+                FlutterMap(
+                  mapController: _mapController,
+                  options: MapOptions(
+                    initialCenter: _currentPosition ?? _defaultLocation,
+                    initialZoom: 13.0,
+                    interactionOptions: const InteractionOptions(
+                      flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
                     ),
                   ),
+                  children: [
+                    TileLayer(
+                      urlTemplate:
+                          'https://tiles.locationiq.com/v3/streets/r/{z}/{x}/{y}.png?key=pk.afa9a9f2dce73422dfca1685d22c7acc',
+                      userAgentPackageName: 'com.powerout.app',
+                    ),
+                    if (_currentPosition != null)
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: _currentPosition!,
+                            width: 44,
+                            height: 44,
+                            child: const Icon(
+                              Icons.my_location,
+                              color: Colors.blue,
+                              size: 30,
+
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
                 ),
-                CustomPaint(painter: _MapMarkersPainter()),
                 Positioned(
                   left: 12,
                   bottom: 12,
@@ -234,7 +325,7 @@ class DashboardScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(
-                      '12 ACTIVE ZONES',
+                      'TRACKING LOCATION',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 11,
@@ -253,11 +344,15 @@ class DashboardScreen extends StatelessWidget {
                     elevation: 2,
                     child: InkWell(
                       customBorder: const CircleBorder(),
-                      onTap: () {},
+                      onTap: () {
+                        if (_currentPosition != null) {
+                          _mapController.move(_currentPosition!, 15.0);
+                        }
+                      },
                       child: const Padding(
                         padding: EdgeInsets.all(10),
                         child: Icon(
-                          Icons.open_in_full,
+                          Icons.my_location,
                           size: 20,
                           color: Colors.black87,
                         ),
@@ -274,6 +369,7 @@ class DashboardScreen extends StatelessWidget {
   }
 
   Widget _buildOutagesHeader(BuildContext context) {
+    // ... (Keep your existing _buildOutagesHeader code exactly the same)
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -307,32 +403,7 @@ class DashboardScreen extends StatelessWidget {
   }
 }
 
-class _MapMarkersPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    void dot(double x, double y, Color c) {
-      final paint = Paint()..color = c;
-      canvas.drawCircle(Offset(x * size.width, y * size.height), 8, paint);
-      canvas.drawCircle(
-        Offset(x * size.width, y * size.height),
-        10,
-        Paint()
-          ..color = c.withValues(alpha: 0.35)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2,
-      );
-    }
-
-    dot(0.25, 0.35, const Color(0xFFFF9800));
-    dot(0.55, 0.45, const Color(0xFF9C27B0));
-    dot(0.72, 0.28, const Color(0xFFFF9800));
-    dot(0.4, 0.62, const Color(0xFF9C27B0));
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
+// ... (Keep your existing _OutageCard code exactly the same)
 class _OutageCard extends StatelessWidget {
   const _OutageCard({
     required this.icon,

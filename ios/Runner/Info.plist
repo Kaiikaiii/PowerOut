@@ -43,6 +43,8 @@
 					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
 					<key>UISceneStoryboardFile</key>
 					<string>Main</string>
+					<key>NSLocationWhenInUseUsageDescription</key>
+<string>PowerOut needs your location to show outages near you.</string>
 				</dict>
 			</array>
 		</dict>

@@ -23,9 +23,6 @@ class ApiService {
 
       final data = json.decode(response.body);
 
-      // Debug (remove later if you want)
-      print("LOGIN RESPONSE: $data");
-
       return data;
     } catch (e) {
       return {
@@ -56,9 +53,6 @@ class ApiService {
       );
 
       final data = json.decode(response.body);
-
-      // Debug (remove later if you want)
-      print("SIGNUP RESPONSE: $data");
 
       return data;
     } catch (e) {

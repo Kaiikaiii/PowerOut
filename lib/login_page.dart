@@ -85,8 +85,6 @@ class _LoginPageState extends State<LoginPage> {
 
     setState(() => _isLoading = false);
 
-    print("LOGIN RESPONSE: $response");
-
     if (_isSuccess(response)) {
       // =========================
       // 💾 SAVE USER SESSION
@@ -105,6 +103,7 @@ class _LoginPageState extends State<LoginPage> {
         (route) => false,
       );
     } else {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
