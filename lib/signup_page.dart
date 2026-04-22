@@ -18,10 +18,10 @@ class _SignUpPageState extends State<SignUpPage> {
   final TextEditingController _passwordController = TextEditingController();
 
   final _barangayOptions = const [
-    'Barangay 1',
+    'Barangay Villamonte',
+    'Barangay Estefania',
     'Barangay 2',
-    'Barangay 3',
-    'Barangay 4',
+    'Barangay Mandalagan',
   ];
 
   // The yellow theme color
