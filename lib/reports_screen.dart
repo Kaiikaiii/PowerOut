@@ -112,6 +112,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   (Color, Color) _statusStyle(String status) {
     switch (status) {
+      case 'investigating':
+        return (const Color(0xFFFFF4DB), const Color(0xFF9D6B08));
       case 'verified':
         return (const Color(0xFFE3F2FD), const Color(0xFF1565C0));
       case 'resolved':

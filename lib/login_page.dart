@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'apiservice.dart';
+import 'admin_login_page.dart';
 import 'main_navigation.dart';
 import 'signup_page.dart';
 
@@ -273,6 +274,26 @@ class _LoginPageState extends State<LoginPage> {
                 ],
               ),
 
+              const SizedBox(height: 14),
+              Center(
+                child: TextButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const AdminLoginPage(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.admin_panel_settings_outlined, size: 18),
+                  label: const Text(
+                    'Admin Login',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFF1D3FAF),
+                  ),
+                ),
+              ),
               const SizedBox(height: 20),
             ],
           ),

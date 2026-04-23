@@ -159,4 +159,35 @@ class ApiService {
       };
     }
   }
+
+  // ==========================
+  // 🛠️ UPDATE REPORT STATUS (ADMIN)
+  // ==========================
+  static Future<Map<String, dynamic>> updateReportStatus({
+    required String reportId,
+    required String status,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/update_report_status.php"),
+        body: {
+          "report_id": reportId,
+          "status": status,
+        },
+      );
+
+      final data = json.decode(response.body);
+      return data is Map<String, dynamic>
+          ? data
+          : <String, dynamic>{
+              "success": false,
+              "message": "Unexpected server response format.",
+            };
+    } catch (e) {
+      return {
+        "success": false,
+        "message": "Connection error: $e",
+      };
+    }
+  }
 }
